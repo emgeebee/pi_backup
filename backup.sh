@@ -28,42 +28,42 @@
 # ======================== CHANGE THESE VALUES ========================
 function stopServices {
 	echo -e "${purple}${bold}Stopping services before backup${NC}${normal}" | tee -a $DIR/backup.log
-    sudo service sendmail stop
-    sudo service cron stop
-    sudo service ssh stop
-    sudo pkill deluged
-    sudo pkill deluge-web
-    sudo service deluge-daemon stop
-    sudo ervice btsync stop
-    sudo service apache2 stop
-    sudo service samba stop
+    service sendmail stop
+    service cron stop
+    service ssh stop
+    pkill deluged
+    pkill deluge-web
+    service deluge-daemon stop
+    ervice btsync stop
+    service apache2 stop
+    service samba stop
     
-    #sudo service noip stop
-    #sudo service proftpd stop
-    #sudo service webmin stop
-    #sudo service xrdp stop
-    #sudo service ddclient stop
-    #sudo service apache2 stop
-    #sudo service samba stop
-    #sudo service avahi-daemon stop
-    #sudo service netatalk stop
+    #service noip stop
+    #service proftpd stop
+    #service webmin stop
+    #service xrdp stop
+    #service ddclient stop
+    #service apache2 stop
+    #service samba stop
+    #service avahi-daemon stop
+    #service netatalk stop
 }
 
 function startServices {
 	echo -e "${purple}${bold}Starting the stopped services${NC}${normal}" | tee -a $DIR/backup.log
-    sudo ervice samba start
-    sudo service apache2 start
-    sudo service btsync start
-    sudo service deluge-daemon start
-    sudo service ssh start
-    sudo service cron start
-    sudo service sendmail start
+    ervice samba start
+    service apache2 start
+    service btsync start
+    service deluge-daemon start
+    service ssh start
+    service cron start
+    service sendmail start
 }
 
 
 # Setting up directories
-SUBDIR=raspberrypi_backups
-MOUNTPOINT=/media/usbstick64gb
+SUBDIR=bedroompi-backups
+MOUNTPOINT=/mnt/pi-drive
 DIR=$MOUNTPOINT/$SUBDIR
 RETENTIONPERIOD=1 # days to keep old backups
 POSTPROCESS=0 # 1 to use a postProcessSucess function after successfull backup
@@ -79,17 +79,17 @@ function mountMountPoint {
 function postProcessSucess {
 	# Update Packages and Kernel
 	echo -e "${yellow}Update Packages and Kernel${NC}${normal}" | tee -a $DIR/backup.log
-    sudo apt-get update
-    sudo apt-get upgrade -y
-    sudo apt-get autoclean
+    apt-get update
+    apt-get upgrade -y
+    apt-get autoclean
 
     echo -e "${yellow}Update Raspberry Pi Firmware${NC}${normal}" | tee -a $DIR/backup.log
-    sudo rpi-update
-    sudo ldconfig
+    rpi-update
+    ldconfig
 
     # Reboot now
     echo -e "${yellow}Reboot now ...${NC}${normal}" | tee -a $DIR/backup.log
-    sudo reboot
+    reboot
 }
 
 # =====================================================================
@@ -140,7 +140,7 @@ if [[ $PACKAGESTATUS == S* ]]
       echo -e "${yellow}${bold}Package 'pv' is NOT installed${NC}${normal}" | tee -a $DIR/backup.log
       echo -e "${yellow}${bold}Installing package 'pv' + 'pv dialog'. Please wait...${NC}${normal}" | tee -a $DIR/backup.log
       echo ""
-      sudo apt-get -y install pv && sudo apt-get -y install pv dialog
+      apt-get -y install pv && apt-get -y install pv dialog
 fi
 
 
@@ -158,15 +158,15 @@ stopServices
 
 # Begin the backup process, should take about 45 minutes hour from 8Gb SD card to HDD
 echo -e "${green}${bold}Backing up SD card to img file on HDD${NC}${normal}" | tee -a $DIR/backup.log
-SDSIZE=`sudo blockdev --getsize64 /dev/mmcblk0`;
+SDSIZE=`blockdev --getsize64 /dev/mmcblk0`;
 if [ $GZIP = 1 ];
 	then
 		echo -e "${green}Gzipping backup${NC}${normal}"
 		OFILE=$OFILE.gz # append gz at file
-        sudo pv -tpreb /dev/mmcblk0 -s $SDSIZE | dd  bs=1M conv=sync,noerror iflag=fullblock | gzip > $OFILE
+        pv -tpreb /dev/mmcblk0 -s $SDSIZE | dd  bs=1M conv=sync,noerror iflag=fullblock | gzip > $OFILE
 	else
 		echo -e "${green}No backup compression${NC}${normal}"
-		sudo pv -tpreb /dev/mmcblk0 -s $SDSIZE | dd of=$OFILE bs=1M conv=sync,noerror iflag=fullblock
+		pv -tpreb /dev/mmcblk0 -s $SDSIZE | dd of=$OFILE bs=1M conv=sync,noerror iflag=fullblock
 fi
 
 # Wait for DD to finish and catch result
@@ -180,7 +180,7 @@ if [ $BACKUP_SUCCESS =  0 ];
 then
       echo -e "${green}${bold}RaspberryPI backup process completed! FILE: $OFILE${NC}${normal}" | tee -a $DIR/backup.log
       echo -e "${yellow}Removing backups older than $RETENTIONPERIOD days${NC}" | tee -a $DIR/backup.log
-      sudo find $DIR -maxdepth 1 -name "*.img" -o -name "*.gz" -mtime +$RETENTIONPERIOD -exec rm {} \;
+      find $DIR -maxdepth 1 -name "*.img" -o -name "*.gz" -mtime +$RETENTIONPERIOD -exec rm {} \;
       echo -e "${cyan}If any backups older than $RETENTIONPERIOD days were found, they were deleted${NC}" | tee -a $DIR/backup.log
 
  
@@ -192,8 +192,8 @@ then
 else 
     # Else remove attempted backup file
      echo -e "${red}${bold}Backup failed!${NC}${normal}" | tee -a $DIR/backup.log
-     sudo rm -f $OFILE
+     rm -f $OFILE
      echo -e "${purple}Last backups on HDD:${NC}" | tee -a $DIR/backup.log
-     sudo find $DIR -maxdepth 1 -name "*.img" -exec ls {} \;
+     find $DIR -maxdepth 1 -name "*.img" -exec ls {} \;
      exit 1
 fi
